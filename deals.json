@@ -1,16 +1,213 @@
-{
-  "generatedAt": null,
-  "source": "SAMPLE PLACEHOLDER — not yet built from real data",
-  "sourceUrl": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",
-  "rentNote": "This file is a placeholder. Run `node scripts/build-deals.js` (or let the GitHub Action run once) to replace it with real HM Land Registry data.",
-  "areas": {
-    "manchester": {
-      "name": "Manchester",
-      "refurb": [
-        {"address": "Sample only — run the build script", "soldPrice": "£0", "localMedian": "£0", "date": "0000-00-00", "note": "Placeholder row"}
-      ],
-      "btl": [],
-      "hmo": []
+// build-deals.js
+// Pulls real, free property sale data from HM Land Registry's Price Paid
+// Data (no API key, no signup) and builds data/deals.json for the site.
+// Source: https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads
+// Run it: node scripts/build-deals.js
+// Automated for free by .github/workflows/update-deals.yml
+
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
+const YEAR = new Date().getFullYear();
+const PPD_URL = `https://price-paid-data.publicdata.landregistry.gov.uk/pp-${YEAR}.csv`;
+const FALLBACK_URL = `https://price-paid-data.publicdata.landregistry.gov.uk/pp-${YEAR - 1}.csv`;
+const OUT_FILE = path.join(__dirname, '..', 'data', 'deals.json');
+
+// ---------------------------------------------------------------------
+// Target areas: map our internal key -> Land Registry "Town/City" values
+// (Price Paid Data records the Royal Mail town, in capitals)
+// ---------------------------------------------------------------------
+const AREAS = {
+  manchester: { name: 'Manchester', towns: ['MANCHESTER', 'SALFORD'] },
+  liverpool: { name: 'Liverpool', towns: ['LIVERPOOL'] },
+  leeds: { name: 'Leeds', towns: ['LEEDS'] },
+  birmingham: { name: 'Birmingham', towns: ['BIRMINGHAM'] },
+  sheffield: { name: 'Sheffield', towns: ['SHEFFIELD'] },
+  nottingham: { name: 'Nottingham', towns: ['NOTTINGHAM'] },
+  newcastle: { name: 'Newcastle', towns: ['NEWCASTLE UPON TYNE'] },
+  london: { name: 'London (outer boroughs)', towns: ['ILFORD', 'BARKING', 'ROMFORD'] },
+};
+
+// ---------------------------------------------------------------------
+// Indicative average monthly rent by area, in GBP. NOT live data -
+// this is a manually-maintained reference table. Update periodically
+// from ONS Private Rental Market Statistics (free, linked above) or
+// PropertyData.co.uk if you later add a paid key.
+// ---------------------------------------------------------------------
+const RENT_TABLE = {
+  manchester: { room: 550, whole: 950 },
+  liverpool: { room: 450, whole: 700 },
+  leeds: { room: 500, whole: 800 },
+  birmingham: { room: 500, whole: 950 },
+  sheffield: { room: 460, whole: 675 },
+  nottingham: { room: 480, whole: 825 },
+  newcastle: { room: 470, whole: 850 },
+  london: { room: 700, whole: 1500 },
+};
+
+const MIN_PLAUSIBLE_PRICE = 25000; // filters out obvious data errors / non-market transfers
+
+function download(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return resolve(download(res.headers.location));
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`Download failed: ${res.statusCode} for ${url}`));
+      }
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+}
+
+// Minimal CSV line parser that respects double-quoted fields (PPD format
+// quotes every field, and none of the fields contain embedded commas
+// inside quotes in practice, but we parse properly anyway).
+function parseCsvLine(line) {
+  const out = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      inQuotes = !inQuotes;
+    } else if (c === ',' && !inQuotes) {
+      out.push(cur);
+      cur = '';
+    } else {
+      cur += c;
     }
   }
+  out.push(cur);
+  return out;
 }
+
+// Price Paid Data column order (no header row in the file):
+// 0 id, 1 price, 2 date, 3 postcode, 4 propertyType, 5 oldNew, 6 duration,
+// 7 paon, 8 saon, 9 street, 10 locality, 11 town, 12 district, 13 county,
+// 14 ppdCategory, 15 recordStatus
+function parseRows(csvText) {
+  const rows = [];
+  const lines = csvText.split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const f = parseCsvLine(line);
+    if (f.length < 16) continue;
+    rows.push({
+      price: parseInt(f[1], 10),
+      date: f[2],
+      postcode: f[3],
+      propertyType: f[4],
+      town: f[11],
+      district: f[12],
+      street: f[9],
+      paon: f[7],
+      category: f[14],
+    });
+  }
+  return rows;
+}
+
+function median(nums) {
+  const s = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+function fmtGBP(n) {
+  return 'GBP ' + Math.round(n).toLocaleString('en-GB');
+}
+
+function buildAreaDeals(areaKey, allRows) {
+  const cfg = AREAS[areaKey];
+  const rows = allRows.filter(
+    (r) => cfg.towns.includes(r.town) && r.price >= MIN_PLAUSIBLE_PRICE && r.category === 'A'
+  );
+  if (rows.length === 0) return { refurb: [], btl: [], hmo: [] };
+
+  const houses = rows.filter((r) => ['D', 'S', 'T'].includes(r.propertyType));
+  const flats = rows.filter((r) => r.propertyType === 'F');
+
+  const houseMedian = houses.length ? median(houses.map((r) => r.price)) : null;
+  const flatMedian = flats.length ? median(flats.map((r) => r.price)) : null;
+  const rent = RENT_TABLE[areaKey];
+
+  // --- Refurb candidates: houses sold notably below the local median ---
+  const refurb = houses
+    .filter((r) => houseMedian && r.price < houseMedian * 0.75)
+    .sort((a, b) => a.price - b.price)
+    .slice(0, 3)
+    .map((r) => ({
+      address: `${r.paon} ${r.street}`.trim() + `, ${r.postcode}`,
+      soldPrice: fmtGBP(r.price),
+      soldPriceRaw: r.price,
+      localMedian: fmtGBP(houseMedian),
+      date: r.date.slice(0, 10),
+      note: `Sold ${Math.round((1 - r.price / houseMedian) * 100)}% below the local house median - worth checking condition.`,
+    }));
+
+  // --- BTL candidates: representative sale near the flat/house median ---
+  const btlPool = flats.length ? flats : houses;
+  const btlMedianPrice = flatMedian || houseMedian;
+  const btl = btlPool
+    .filter((r) => btlMedianPrice && Math.abs(r.price - btlMedianPrice) < btlMedianPrice * 0.15)
+    .slice(0, 2)
+    .map((r) => {
+      const annualRent = rent.whole * 12;
+      const yieldPct = ((annualRent / r.price) * 100).toFixed(1);
+      return {
+        address: `${r.paon} ${r.street}`.trim() + `, ${r.postcode}`,
+        soldPrice: fmtGBP(r.price),
+        soldPriceRaw: r.price,
+        estRent: `${fmtGBP(rent.whole)}/mo (indicative area average)`,
+        estYield: `${yieldPct}%`,
+        date: r.date.slice(0, 10),
+      };
+    });
+
+  // --- HMO candidates: larger houses, priced above the local median ---
+  const hmo = houses
+    .filter((r) => houseMedian && r.price > houseMedian * 1.1)
+    .sort((a, b) => b.price - a.price)
+    .slice(0, 2)
+    .map((r) => {
+      const assumedRooms = 5;
+      const annualRent = rent.room * assumedRooms * 12;
+      const yieldPct = ((annualRent / r.price) * 100).toFixed(1);
+      return {
+        address: `${r.paon} ${r.street}`.trim() + `, ${r.postcode}`,
+        soldPrice: fmtGBP(r.price),
+        soldPriceRaw: r.price,
+        estRoomRent: `${fmtGBP(rent.room)}/mo per room (indicative, ${assumedRooms} rooms assumed)`,
+        estYield: `${yieldPct}%`,
+        date: r.date.slice(0, 10),
+        note: 'Check the council\u2019s Article 4 Direction & HMO licensing rules before buying.',
+      };
+    });
+
+  return { refurb, btl, hmo };
+}
+
+async function main() {
+  console.log(`Downloading Price Paid Data for ${YEAR}...`);
+  let csvText;
+  try {
+    csvText = await download(PPD_URL);
+  } catch (e) {
+    console.warn(`Current year file unavailable yet (${e.message}), trying ${YEAR - 1}...`);
+    csvText = await download(FALLBACK_URL);
+  }
+  console.log(`Downloaded ${(csvText.length / 1e6).toFixed(1)}MB, parsing...`);
+  const rows = parseRows(csvText);
+  console.log(`Parsed ${rows.length} transactions.`);
+
+  const result = {
+    generatedAt: new Date().toISOString(),
+    source: 'HM Land Registry Price Paid Data (Open Government Licence)',
+    sourceUrl: 'https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads',
+    rentNote: 'Rent/yield figures use a manually-main
