@@ -1,0 +1,33 @@
+name: Refresh property deals data
+
+# Runs for free on GitHub's public-repo runners.
+# Schedule matches HM Land Registry's release pattern (20th working day
+# of each month) with a small buffer, plus you can trigger it manually.
+on:
+  schedule:
+    - cron: '0 6 25 * *'   # 06:00 UTC on the 25th of every month
+  workflow_dispatch: {}      # lets you click "Run workflow" any time
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build deals.json from HM Land Registry data
+        run: node scripts/build-deals.js
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "deals-bot"
+          git config user.email "deals-bot@users.noreply.github.com"
+          git add data/deals.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "Refresh property deals data"
+          git push
