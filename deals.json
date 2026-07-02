@@ -1,0 +1,16 @@
+{
+  "generatedAt": null,
+  "source": "SAMPLE PLACEHOLDER — not yet built from real data",
+  "sourceUrl": "https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads",
+  "rentNote": "This file is a placeholder. Run `node scripts/build-deals.js` (or let the GitHub Action run once) to replace it with real HM Land Registry data.",
+  "areas": {
+    "manchester": {
+      "name": "Manchester",
+      "refurb": [
+        {"address": "Sample only — run the build script", "soldPrice": "£0", "localMedian": "£0", "date": "0000-00-00", "note": "Placeholder row"}
+      ],
+      "btl": [],
+      "hmo": []
+    }
+  }
+}
