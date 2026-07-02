@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>England Property Deals | Real Land Registry Data — Refurb, Buy-to-Let & HMO</title>
+<meta name="description" content="Free tool that turns HM Land Registry's official Price Paid Data into a shortlist of refurb, Buy-to-Let and HMO opportunities across England. No signup, no scraping — real government data.">
+<meta name="keywords" content="england property deals, buy to let, HMO investing, refurb and flip, uk property investment, land registry price paid data">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://example.com/property-deals">
+<meta property="og:type" content="website">
+<meta property="og:title" content="England Property Deals — Real Land Registry Data">
+<meta property="og:description" content="A free shortlist of refurb, Buy-to-Let and HMO opportunities across England, built from official HM Land Registry data.">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1c2b3a">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "England Property Deals",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+  "description": "A free tool built on HM Land Registry Price Paid Data that surfaces refurb, Buy-to-Let and HMO opportunities across England.",
+  "areaServed": "GB"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2b3a; --paper:#f2ede2; --paper-dark:#e7dfcd;
+    --brick:#9a3324; --brick-dark:#7a2519; --gold:#b68d40; --line:#c9bfa4; --green:#3f6b4a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;line-height:1.6;}
+  h1,h2,h3{font-family:'Fraunces',serif;}
+  a{color:inherit;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  header{border-bottom:2px solid var(--ink);padding:18px 0;background:var(--paper);position:sticky;top:0;z-index:20;}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-family:'Fraunces',serif;font-weight:900;font-size:1.4rem;}
+  .logo span{color:var(--brick);}
+  nav a{margin-inline-start:22px;text-decoration:none;font-weight:600;font-size:.95rem;border-bottom:2px solid transparent;padding-bottom:2px;}
+  nav a:hover{border-color:var(--brick);}
+
+  .hero{padding:64px 0 40px;position:relative;overflow:hidden;}
+  .ledger-lines{position:absolute;inset:0;background:repeating-linear-gradient(var(--paper) 0 37px, var(--line) 37px 38px);opacity:.35;z-index:0;}
+  .hero .wrap{position:relative;z-index:1;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:999px;}
+  .hero h1{font-size:clamp(2.1rem,5vw,3.2rem);margin:20px 0 14px;line-height:1.15;max-width:780px;}
+  .hero h1 em{font-style:normal;color:var(--brick);}
+  .hero p.lead{font-size:1.15rem;max-width:640px;color:#3a3a3a;margin-bottom:22px;}
+  .tags{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+  .tag{border:1.5px solid var(--ink);border-radius:999px;padding:6px 14px;font-size:.85rem;font-weight:700;background:#fff;}
+  .tag.refurb{border-color:var(--brick);color:var(--brick-dark);}
+  .tag.btl{border-color:var(--green);color:var(--green);}
+  .tag.hmo{border-color:var(--gold);color:#7a5a1e;}
+
+  section{padding:48px 0;}
+  .section-title{display:flex;align-items:baseline;gap:14px;margin-bottom:8px;}
+  .section-title h2{margin:0;font-size:1.6rem;}
+  .section-sub{color:#555;max-width:660px;margin-bottom:24px;}
+
+  .data-strip{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:.88rem;color:#444;}
+  .data-strip strong{color:var(--ink);}
+  .data-strip a{color:var(--brick-dark);text-decoration:underline;}
+
+  .generator{background:#fff;border:1px solid var(--line);border-radius:16px;padding:32px;}
+  .controls{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;}
+  .controls select{flex:1;min-width:200px;padding:13px 14px;border-radius:8px;border:1.5px solid var(--ink);font-family:'Manrope',sans-serif;font-size:1rem;background:#fff;color:var(--ink);}
+  .btn{background:var(--gold);color:#2a2000;border:none;padding:13px 22px;border-radius:8px;font-weight:800;font-size:1rem;cursor:pointer;transition:transform .12s ease, background .2s ease;font-family:'Manrope',sans-serif;flex:none;}
+  .btn:hover{background:#9c7530;transform:translateY(-1px);}
+  #fetch-status{font-size:.85rem;color:#777;margin:8px 0 20px;}
+
+  .plan-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;background:var(--ink);color:var(--paper);border-radius:12px;padding:18px 22px;margin-bottom:22px;}
+  .plan-strip .price{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:800;}
+  .plan-strip .price span{font-size:.85rem;font-weight:500;color:#c9c1ae;}
+  .btn-subscribe{background:var(--brick);color:#fff;border:none;padding:12px 20px;border-radius:8px;font-weight:800;font-size:.95rem;cursor:pointer;font-family:'Manrope',sans-serif;text-decoration:none;display:inline-block;}
+  .btn-subscribe:hover{background:var(--brick-dark);}
+  .status-pill{font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);}
+  .status-pill.active{background:#2f5b3d;}
+
+  .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;position:relative;}
+  .results.locked-grid{min-height:220px;}
+  .locked-overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    background:linear-gradient(180deg, rgba(242,237,226,.4), rgba(242,237,226,.94) 60%);
+    border-radius:12px;text-align:center;padding:20px;
+  }
+  .locked-overlay p{max-width:360px;color:#444;font-size:.92rem;margin:0;}
+  .deal-card.blurred{filter:blur(5px);user-select:none;}
+  .deal-card{border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--paper-dark);position:relative;}
+  .deal-card .badge{position:absolute;top:14px;right:14px;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--ink);color:var(--paper);}
+  .deal-card h3{margin:6px 0 4px;font-size:1rem;}
+  .deal-card .area{color:var(--brick-dark);font-weight:700;font-size:.85rem;margin-bottom:10px;}
+  .deal-card ul{list-style:none;padding:0;margin:0 0 10px;font-size:.87rem;}
+  .deal-card ul li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted var(--line);padding:4px 0;}
+  .deal-card .note{font-size:.78rem;color:#666;margin:0;}
+  .empty-note{color:#777;font-size:.92rem;grid-column:1/-1;}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .step{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;}
+  .step .n{font-family:'Fraunces',serif;font-weight:900;font-size:1.5rem;color:var(--brick);}
+  .step h3{margin:8px 0 6px;font-size:1.02rem;}
+  .step p{margin:0;font-size:.9rem;color:#555;}
+
+  footer{border-top:2px solid var(--ink);padding:28px 0;margin-top:16px;}
+  footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:.83rem;color:#555;}
+
+  @media(max-width:760px){.steps{grid-template-columns:1fr;}}
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;} .btn{transition:none;}}
+  :focus-visible{outline:3px solid var(--brick);outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">England <span>Property Deals</span></div>
+    <nav>
+      <a href="#generator">Find deals</a>
+      <a href="#how">Data & method</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="ledger-lines" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="eyebrow">🇬🇧 Try it free · No account needed · Real HM Land Registry data</span>
+    <h1>The best areas for <em>refurb</em>, <em>Buy-to-Let</em> and <em>HMO</em>, built from actual sold prices</h1>
+    <p class="lead">Every listing comes from HM Land Registry's official Price Paid Data — real completed sales, not scraped estate agent copy. Try it free below, then unlock the full shortlist for £20/month — no account, just a one-click payment.</p>
+    <div class="tags">
+      <span class="tag refurb">Refurb & flip</span>
+      <span class="tag btl">Buy-to-Let</span>
+      <span class="tag hmo">HMO</span>
+    </div>
+  </div>
+</section>
+
+<section id="generator">
+  <div class="wrap">
+    <div class="section-title"><h2>Deal generator</h2></div>
+    <p class="section-sub">Pick a strategy and an area, then hit "Generate" for a shortlist built straight from the data file.</p>
+
+    <div class="generator">
+      <div class="plan-strip">
+        <div>
+          <div class="price">£20<span> / month · full shortlist, all areas, updated monthly</span></div>
+        </div>
+        <div id="plan-action">
+          <span class="status-pill" id="plan-status">Free demo — 1 result per strategy</span>
+          <a id="subscribe-link" class="btn-subscribe" href="#" target="_blank" rel="noopener" style="margin-inline-start:10px;">Subscribe — £20/mo</a>
+        </div>
+      </div>
+      <div class="controls">
+        <select id="gen-type" aria-label="Strategy">
+          <option value="refurb">Refurb & flip</option>
+          <option value="btl">Buy-to-Let</option>
+          <option value="hmo">HMO</option>
+        </select>
+        <select id="gen-area" aria-label="Area">
+          <option value="any">All areas</option>
+        </select>
+        <button id="gen-btn" class="btn" type="button">🔎 Generate</button>
+      </div>
+      <p id="fetch-status">Loading data…</p>
+      <div id="results-wrap" style="position:relative;">
+        <div id="results" class="results"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-title"><h2>Where this data comes from</h2></div>
+    <p class="section-sub">No scraping, no paid API, no account. Just official, open, free data — refreshed automatically.</p>
+    <div class="data-strip" id="data-strip">
+      Loading data source info…
+    </div>
+    <div class="steps" style="margin-top:24px;">
+      <div class="step"><div class="n">01</div><h3>Real sold prices</h3><p>Purchase prices and addresses come from HM Land Registry Price Paid Data — every residential sale in England & Wales, published monthly under the Open Government Licence.</p></div>
+      <div class="step"><div class="n">02</div><h3>Rule-based shortlisting</h3><p>Refurb picks are houses sold well below the local median. HMO picks are larger houses priced above it. No black box, just transparent thresholds you can change in the script.</p></div>
+      <div class="step"><div class="n">03</div><h3>Indicative rent, not scraped</h3><p>Rent and yield use a small reference table you refresh from ONS Private Rental Market Statistics — there's no free, legal, live rent API to pull from.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 England Property Deals. Built on public data.</span>
+    <span>Sold prices are historical fact from HM Land Registry. Rent/yield figures are indicative estimates — always do independent due diligence.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------------------------------------------------------------------
+  // CONFIG — replace these two with your real values before deploying.
+  // ---------------------------------------------------------------------
+  var WORKER_BASE_URL = 'https://england-property-deals-api.YOUR_SUBDOMAIN.workers.dev';
+  var PAYMENT_LINK_URL = 'https://buy.stripe.com/6oU3cwaHnbktde1aPq67S00';
+  // ---------------------------------------------------------------------
+
+  var DATA = null;           // free demo data (always loaded, local file)
+  var FULL_DATA = null;      // full data (only loaded once subscription verified)
+  var TYPE_LABEL = {refurb:"Refurb & flip", btl:"Buy-to-Let", hmo:"HMO"};
+  var subscriptionId = localStorage.getItem('epd_sub_id') || null;
+  var isSubscribed = false;
+
+  document.getElementById('subscribe-link').href = PAYMENT_LINK_URL;
+
+  function setPlanStatus(text, active){
+    var pill = document.getElementById('plan-status');
+    pill.textContent = text;
+    pill.className = 'status-pill' + (active ? ' active' : '');
+    document.getElementById('subscribe-link').style.display = active ? 'none' : 'inline-block';
+  }
+
+  function populateAreaDropdown(){
+    var sel = document.getElementById('gen-area');
+    Object.keys(DATA.areas).forEach(function(key){
+      var opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = DATA.areas[key].name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderDataStrip(){
+    var strip = document.getElementById('data-strip');
+    var d = DATA.generatedAt ? new Date(DATA.generatedAt).toLocaleDateString('en-GB') : 'not yet built';
+    strip.innerHTML = '<span>📅 <strong>Last refreshed:</strong> '+d+'</span><span>📊 <strong>Source:</strong> <a href="'+DATA.sourceUrl+'" target="_blank" rel="noopener">'+DATA.source+'</a></span><span>'+DATA.rentNote+'</span>';
+  }
+
+  function buildCard(areaKey, type, deal, areaData){
+    var rows = "";
+    if(type==="refurb"){
+      rows = "<li><span>Sold price</span><span>"+deal.soldPrice+"</span></li>"+
+             "<li><span>Local house median</span><span>"+deal.localMedian+"</span></li>"+
+             "<li><span>Sold</span><span>"+deal.date+"</span></li>";
+    } else if(type==="btl"){
+      rows = "<li><span>Sold price</span><span>"+deal.soldPrice+"</span></li>"+
+             "<li><span>Est. rent</span><span>"+deal.estRent+"</span></li>"+
+             "<li><span>Est. yield</span><span>"+deal.estYield+"</span></li>";
+    } else {
+      rows = "<li><span>Sold price</span><span>"+deal.soldPrice+"</span></li>"+
+             "<li><span>Est. room rent</span><span>"+deal.estRoomRent+"</span></li>"+
+             "<li><span>Est. yield</span><span>"+deal.estYield+"</span></li>";
+    }
+    var note = deal.note ? '<p class="note">'+deal.note+'</p>' : '';
+    return '<div class="deal-card"><span class="badge">'+TYPE_LABEL[type]+'</span>'+
+      '<h3>'+deal.address+'</h3>'+
+      '<div class="area">'+areaData.name+'</div>'+
+      '<ul>'+rows+'</ul>'+note+'</div>';
+  }
+
+  function generate(){
+    var source = isSubscribed && FULL_DATA ? FULL_DATA : DATA;
+    var type = document.getElementById('gen-type').value;
+    var area = document.getElementById('gen-area').value;
+    var areas = area==="any" ? Object.keys(source.areas) : [area];
+
+    var cards = [];
+    areas.forEach(function(a){
+      var areaData = source.areas[a];
+      if(!areaData) return;
+      var list = areaData[type] || [];
+      list.forEach(function(deal){ cards.push({html: buildCard(a, type, deal, areaData)}); });
+    });
+
+    var resultsEl = document.getElementById('results');
+    var wrap = document.getElementById('results-wrap');
+    var existingOverlay = document.getElementById('locked-overlay');
+    if(existingOverlay) existingOverlay.remove();
+
+    if(cards.length === 0){
+      resultsEl.innerHTML = '<p class="empty-note">No matches for that combination yet — try a different area or strategy.</p>';
+      return;
+    }
+
+    if(isSubscribed){
+      resultsEl.innerHTML = cards.map(function(c){ return c.html; }).join('');
+      return;
+    }
+
+    // Free demo: show 1 real card, blur the rest (real cards, just obscured —
+    // never fake data) and overlay a subscribe prompt on top, if there's more to see.
+    var visible = cards.slice(0, 1).map(function(c){ return c.html; }).join('');
+    var lockedCount = cards.length - 1;
+    var blurredCards = cards.slice(1)
+      .map(function(c){ return c.html.replace('class="deal-card"', 'class="deal-card blurred"'); })
+      .join('');
+
+    resultsEl.innerHTML = visible + blurredCards;
+
+    if(lockedCount > 0){
+      var overlay = document.createElement('div');
+      overlay.id = 'locked-overlay';
+      overlay.className = 'locked-overlay';
+      overlay.innerHTML = '<strong>🔒 '+lockedCount+' more real result'+(lockedCount===1?'':'s')+' for this search</strong>'+
+        '<p>Subscribe for £20/month to unlock every area and every strategy, refreshed monthly from HM Land Registry.</p>'+
+        '<a class="btn-subscribe" href="'+PAYMENT_LINK_URL+'" target="_blank" rel="noopener">Subscribe — £20/mo</a>';
+      wrap.appendChild(overlay);
+    }
+  }
+
+  document.getElementById('gen-btn').addEventListener('click', generate);
+
+  function loadFullData(){
+    if(!subscriptionId) return Promise.resolve(false);
+    return fetch(WORKER_BASE_URL + '/api/deals?sub=' + encodeURIComponent(subscriptionId))
+      .then(function(r){
+        if(!r.ok) throw new Error('not active');
+        return r.json();
+      })
+      .then(function(json){
+        FULL_DATA = json;
+        isSubscribed = true;
+        setPlanStatus('✅ Subscribed — full data unlocked', true);
+        return true;
+      })
+      .catch(function(){
+        // Subscription missing/cancelled/expired — fall back to demo.
+        localStorage.removeItem('epd_sub_id');
+        subscriptionId = null;
+        isSubscribed = false;
+        setPlanStatus('Free demo — 1 result per strategy', false);
+        return false;
+      });
+  }
+
+  function resolveSessionIfPresent(){
+    var params = new URLSearchParams(window.location.search);
+    var sessionId = params.get('session_id');
+    if(!sessionId) return Promise.resolve();
+    return fetch(WORKER_BASE_URL + '/api/resolve?session_id=' + encodeURIComponent(sessionId))
+      .then(function(r){ if(!r.ok) throw new Error('resolve failed'); return r.json(); })
+      .then(function(json){
+        subscriptionId = json.subscriptionId;
+        localStorage.setItem('epd_sub_id', subscriptionId);
+        // Clean the URL so the session_id isn't left visible/bookmarked.
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })
+      .catch(function(){ /* ignore, user stays on the demo */ });
+  }
+
+  fetch('data/deals.json', {cache: 'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(json){
+      DATA = json;
+      document.getElementById('fetch-status').textContent = '';
+      populateAreaDropdown();
+      renderDataStrip();
+      return resolveSessionIfPresent();
+    })
+    .then(function(){ return loadFullData(); })
+    .then(function(){ generate(); })
+    .catch(function(err){
+      document.getElementById('fetch-status').textContent = 'Could not load data/deals.json (' + err.message + '). Run the build script first, or check the file is deployed alongside index.html.';
+    });
+})();
+</script>
+</body>
+</html>
